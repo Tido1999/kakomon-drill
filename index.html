@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>技術士一次 過去問ドリル</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="過去問ドリル">
+<meta name="theme-color" content="#f3f5f2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: single narrow column (max 680px), mark-sheet motif: choices as answer bubbles */
+:root{
+  --paper:#f3f5f2; --surface:#ffffff; --ink:#1b2427; --muted:#5a686b; --line:#d5dcd8; --soft:#e8ece9;
+  --accent:#1d6b74; --accent-ink:#ffffff; --mark:#c94a63; --mark-soft:#f6e3e7;
+  --ok:#25804a; --ok-soft:#e0f1e6; --ng:#b9412c; --ng-soft:#f8e4df; --warn:#9a6a00; --warn-soft:#f6edd6;
+  --font:"BIZ UDPGothic","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111617; --surface:#192022; --ink:#e3ebe9; --muted:#97a6a8; --line:#2c3739; --soft:#212a2c;
+  --accent:#5db3bc; --accent-ink:#0d1a1c; --mark:#ec7d93; --mark-soft:#3a2328;
+  --ok:#5cc386; --ok-soft:#173023; --ng:#f08068; --ng-soft:#3a201b; --warn:#e2b552; --warn-soft:#332a14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111617; --surface:#192022; --ink:#e3ebe9; --muted:#97a6a8; --line:#2c3739; --soft:#212a2c;
+  --accent:#5db3bc; --accent-ink:#0d1a1c; --mark:#ec7d93; --mark-soft:#3a2328;
+  --ok:#5cc386; --ok-soft:#173023; --ng:#f08068; --ng-soft:#3a201b; --warn:#e2b552; --warn-soft:#332a14; color-scheme:dark}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.75;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:20px;min-width:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,[role=button]:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.35}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* header */
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-top:22px}
+.brand h1{font-size:22px;letter-spacing:.02em}
+.brand .sub{font-size:13px;color:var(--muted);letter-spacing:.06em}
+.linkbtn{background:none;border:0;color:var(--accent);font-weight:700;padding:6px 0;font-size:14px}
+
+/* segmented subject control */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--soft);border-radius:999px;padding:4px;gap:4px}
+.seg button{border:0;background:transparent;border-radius:999px;padding:9px 4px;font-weight:700;font-size:15px;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 10px;min-width:0}
+.stat .v{font-family:var(--mono);font-size:22px;line-height:1.2}
+.stat .l{font-size:12px;color:var(--muted);letter-spacing:.04em}
+
+section.blk{display:flex;flex-direction:column;gap:10px}
+.blk-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.blk-h h2{font-size:15px;letter-spacing:.08em;color:var(--muted);font-weight:700}
+
+.years{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.yr{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 10px 8px;text-align:left;display:flex;flex-direction:column;gap:6px;min-width:0}
+.yr .yl{font-weight:700;font-size:15px;line-height:1.2}
+.yr .ym{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.yr .bar{height:4px;background:var(--soft);border-radius:2px;overflow:hidden;display:flex}
+.yr .bar i{display:block;height:100%}
+.yr[disabled]{opacity:.45;cursor:default}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;font-size:14px}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.lbl{font-size:13px;color:var(--muted);min-width:4.5em}
+
+.btn{border:0;border-radius:var(--r);padding:13px 18px;font-weight:700;font-size:16px;background:var(--accent);color:var(--accent-ink);display:inline-flex;justify-content:center;align-items:center;gap:8px}
+.btn.sec{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn.wide{width:100%}
+.btn[disabled]{opacity:.45;cursor:default}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+
+/* quiz */
+.qbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);display:flex;align-items:center;gap:10px;padding-block:10px;margin-inline:-4px;padding-inline:4px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+.qbar .prog{flex:1;height:6px;background:var(--soft);border-radius:3px;overflow:hidden}
+.qbar .prog i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;min-width:40px;height:40px;padding:0 12px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.iconbtn.on{color:var(--mark);border-color:var(--mark);background:var(--mark-soft)}
+.qtag{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--muted)}
+.qtag .num{font-family:var(--mono);font-size:15px;color:var(--ink);font-weight:500}
+.badge{display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:999px;border:1px solid currentColor;line-height:1.6;letter-spacing:.03em;white-space:nowrap}
+.badge.warn{color:var(--warn);background:var(--warn-soft);border-color:transparent}
+.badge.ok{color:var(--ok);background:var(--ok-soft);border-color:transparent}
+.badge.ng{color:var(--ng);background:var(--ng-soft);border-color:transparent}
+.qtext{font-size:16.5px;min-width:0}
+.qtext p{margin:0 0 .7em}
+.qtext p:last-child{margin-bottom:0}
+.tbl{overflow-x:auto;margin:.4em 0 .8em;-webkit-overflow-scrolling:touch}
+.tbl table{border-collapse:collapse;font-size:14.5px;min-width:60%}
+.tbl th,.tbl td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+.tbl th{background:var(--soft);font-weight:700}
+.fig{background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px;display:flex;justify-content:center}
+.fig img{display:block;max-width:100%;height:auto}
+math{font-size:1.05em}math .ovl{border-top:.075em solid currentColor;padding-top:.12em}
+
+.choices{display:flex;flex-direction:column;gap:8px}
+.ch{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:11px 12px;min-width:0}
+.ch .bub{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--mark);color:var(--mark);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:15px;line-height:1}
+.ch .tx{min-width:0;overflow-wrap:anywhere;padding-top:2px}
+.ch:not([disabled]):hover{border-color:var(--accent)}
+.ch.right{border-color:var(--ok);background:var(--ok-soft)}
+.ch.right .bub{background:var(--ok);border-color:var(--ok);color:#fff}
+.ch.wrong{border-color:var(--ng);background:var(--ng-soft)}
+.ch.wrong .bub{background:var(--ng);border-color:var(--ng);color:#fff}
+.ch[disabled]{cursor:default}
+.ch.dim{opacity:.6}
+
+.ctbl{overflow-x:auto}
+.ctbl table{border-collapse:separate;border-spacing:0 6px;width:100%;font-size:15px}
+.ctbl th{font-size:13px;color:var(--muted);font-weight:700;padding:0 8px;text-align:left}
+.ctbl tbody tr{cursor:pointer}
+.ctbl td{background:var(--surface);border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);padding:9px 8px;vertical-align:middle}
+.ctbl td:first-child{border-left:1.5px solid var(--line);border-radius:var(--r) 0 0 var(--r);width:40px}
+.ctbl td:last-child{border-right:1.5px solid var(--line);border-radius:0 var(--r) var(--r) 0}
+.ctbl .bub{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--mark);color:var(--mark);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:14px}
+.ctbl tr.right td{background:var(--ok-soft);border-color:var(--ok)}
+.ctbl tr.right .bub{background:var(--ok);border-color:var(--ok);color:#fff}
+.ctbl tr.wrong td{background:var(--ng-soft);border-color:var(--ng)}
+.ctbl tr.wrong .bub{background:var(--ng);border-color:var(--ng);color:#fff}
+.ctbl.locked tbody tr{cursor:default}
+
+.fb{border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);background:var(--surface)}
+.fb .verdict{font-size:19px;font-weight:700;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.fb .verdict.ok{color:var(--ok)} .fb .verdict.ng{color:var(--ng)}
+.fb .ex{border-top:1px dashed var(--line);padding-top:10px;font-size:15.5px}
+.fb .ex p{margin:0 0 .6em}
+.fb .ex-h{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);margin-bottom:4px;flex-wrap:wrap}
+.note{font-size:13.5px;background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:8px 10px}
+.qnav{display:grid;grid-template-columns:1fr 2fr;gap:8px}
+
+/* result */
+.score{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.score .big{font-family:var(--mono);font-size:44px;line-height:1}
+.rlist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.ri{border-top:1px solid var(--line)}
+.ri:first-child{border-top:0}
+.ri>button{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;width:100%;text-align:left;background:none;border:0;padding:10px 12px}
+.ri .mk{font-size:18px;font-weight:700;text-align:center}
+.ri .mk.ok{color:var(--ok)} .ri .mk.ng{color:var(--ng)} .ri .mk.sk{color:var(--muted)}
+.ri .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.ri .a{font-family:var(--mono);font-size:13px;color:var(--muted);white-space:nowrap}
+.ri .det{padding:4px 14px 14px;display:flex;flex-direction:column;gap:10px;font-size:15px}
+
+/* stats */
+.stbl{overflow-x:auto}
+.stbl table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+.stbl th,.stbl td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.stbl th:first-child,.stbl td:first-child{text-align:left}
+.stbl th{font-size:12px;color:var(--muted);font-weight:700}
+textarea{width:100%;min-height:110px;font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:8px;box-sizing:border-box}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:999px;font-size:14px;z-index:20;max-width:calc(100% - 32px)}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+.confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head><body>
+<div class="wrap" id="app"><div class="empty">読み込み中…</div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+'use strict';
+const KEY='gishi1-drill-v1';
+const SUBJ=['専門','基礎','適性'];
+const SUBJ_LABEL={'専門':'専門（生物工学）','基礎':'基礎','適性':'適性'};
+const NUMC=['①','②','③','④','⑤','⑥'];
+let D=null, BY={}, ST=null, UI={subj:'専門', rcount:25, rpool:'all', rgroups:[], rmode:'subj'};
+const $app=document.getElementById('app');
+
+/* ---------- storage ---------- */
+function blank(){return {ans:{},star:{},log:[],sessions:[],cur:null,ui:null}}
+function load(){try{const s=localStorage.getItem(KEY);if(s){const o=JSON.parse(s);return Object.assign(blank(),o)}}catch(e){}return blank()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(ST))}catch(e){}}
+ST=load();
+if(ST.ui) Object.assign(UI,ST.ui);
+
+/* ---------- helpers ---------- */
+const h=(s)=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2200)}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function yl(y){return (D&&D.meta.yearLabel[y])||y}
+function ys(y){return y.replace('H','H').replace('R1再','R1再')}
+function qs(subj){return D.qs.filter(q=>q.s===subj)}
+function isCorrect(q,ch){if(q.a==='all')return true;return Array.isArray(q.a)&&q.a.includes(ch)}
+function ansText(q){if(q.a==='all')return '全員正解';if(!q.a)return '不明';return q.a.map(n=>NUMC[n-1]).join(' / ')}
+function fmtDate(t){const d=new Date(t);const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`}
+function pct(a,b){return b?Math.round(a*100/b)+'%':'—'}
+function persistUI(){ST.ui={subj:UI.subj,rcount:UI.rcount,rpool:UI.rpool,rgroups:UI.rgroups};save()}
+async function copyText(txt){
+  try{await navigator.clipboard.writeText(txt);toast('コピーしました');return true}
+  catch(e){showCopyFallback(txt);return false}
+}
+function showCopyFallback(txt){
+  const box=document.createElement('div');box.className='card';
+  box.innerHTML='<div class="small muted">自動コピーできませんでした。下の文字を長押しして全選択→コピーしてください。</div><textarea id="fallbackTxt" readonly></textarea><button class="btn sec" id="fbClose">閉じる</button>';
+  $app.prepend(box);const ta=box.querySelector('textarea');ta.value=txt;ta.focus();ta.select();
+  box.querySelector('#fbClose').onclick=()=>box.remove();window.scrollTo(0,0);
+}
+
+/* ---------- per-question stats ---------- */
+function rec(q){return ST.ans[q.id]}
+function subjStats(subj){
+  const list=qs(subj);let done=0,correct=0,wrong=0;
+  for(const q of list){const r=rec(q);if(r){done++;if(r.last)correct++;else wrong++}}
+  return {total:list.length,done,correct,wrong};
+}
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  ST.cur&&ST.cur.done&&(ST.cur=null);
+  const subj=UI.subj, s=subjStats(subj);
+  const years=D.meta.years.filter(y=>D.qs.some(q=>q.s===subj&&q.y===y));
+  const missing=D.meta.years.filter(y=>!years.includes(y));
+  const starN=qs(subj).filter(q=>ST.star[q.id]).length;
+  let html=`
+  <header class="top"><div class="brand"><div class="sub">技術士第一次試験</div><h1>過去問ドリル</h1></div>
+    <button class="linkbtn" id="toStats">記録・書き出し</button></header>
+  ${ST.cur&&!ST.cur.done?`<div class="card"><div><b>続きから</b><div class="small muted">${h(ST.cur.title)}　${ST.cur.pos+1} / ${ST.cur.ids.length}問目</div></div><div class="actions"><button class="btn" id="resume">再開する</button><button class="btn sec" id="discard">やめる</button></div></div>`:''}
+  <div class="seg" role="group" aria-label="科目">${SUBJ.map(x=>`<button aria-pressed="${x===subj}" data-subj="${x}">${x==='専門'?'専門':x}</button>`).join('')}</div>
+  <div class="summary">
+    <div class="stat"><div class="v">${s.done}<span class="small muted">/${s.total}</span></div><div class="l">解いた問題</div></div>
+    <div class="stat"><div class="v">${pct(s.correct,s.done)}</div><div class="l">直近の正答率</div></div>
+    <div class="stat"><div class="v">${s.wrong}</div><div class="l">間違えたまま</div></div>
+  </div>
+  <section class="blk"><div class="blk-h"><h2>年度別に解く</h2><span class="small muted">${SUBJ_LABEL[subj]}</span></div>
+    <div class="years">${years.slice().reverse().map(y=>{
+      const list=D.qs.filter(q=>q.s===subj&&q.y===y);let ok=0,ng=0;
+      list.forEach(q=>{const r=rec(q);if(r){r.last?ok++:ng++}});
+      const n=list.length;
+      return `<button class="yr" data-year="${y}"><span class="yl">${h(y==='R1再'?'R1 再試験':y)}</span><span class="ym">${ok+ng?`${ok}/${n}正解`:`${n}問`}</span><span class="bar"><i style="width:${ok*100/n}%;background:var(--ok)"></i><i style="width:${ng*100/n}%;background:var(--ng)"></i></span></button>`}).join('')}
+    </div>
+    ${missing.length?`<div class="small muted">準備中：${missing.join('、')}</div>`:''}
+  </section>
+  <section class="blk"><div class="blk-h"><h2>ランダムに解く</h2></div>
+    <div class="card">
+      <div class="row"><span class="lbl">範囲</span><div class="chips">
+        <button class="chip" data-rmode="subj" aria-pressed="${UI.rmode!=='all'}">${subj}だけ</button>
+        <button class="chip" data-rmode="all" aria-pressed="${UI.rmode==='all'}">3科目まとめて</button></div></div>
+      ${subj==='基礎'&&UI.rmode!=='all'?`<div class="row"><span class="lbl">群</span><div class="chips">${[1,2,3,4,5].map(g=>`<button class="chip" data-grp="${g}" aria-pressed="${UI.rgroups.includes(g)}">${g}群 ${h(D.meta.groups[g])}</button>`).join('')}</div></div>`:''}
+      <div class="row"><span class="lbl">問題数</span><div class="chips">${[10,25,50,0].map(n=>`<button class="chip" data-rc="${n}" aria-pressed="${UI.rcount===n}">${n?n+'問':'全部'}</button>`).join('')}</div></div>
+      <div class="row"><span class="lbl">出題</span><div class="chips">
+        <button class="chip" data-rp="all" aria-pressed="${UI.rpool==='all'}">全問</button>
+        <button class="chip" data-rp="new" aria-pressed="${UI.rpool==='new'}">まだ解いていない</button>
+        <button class="chip" data-rp="weak" aria-pressed="${UI.rpool==='weak'}">未解答＋間違い</button></div></div>
+      <button class="btn wide" id="startRandom">ランダムで始める</button>
+    </div>
+  </section>
+  <section class="blk"><div class="blk-h"><h2>復習</h2></div>
+    <div class="actions">
+      <button class="btn sec" id="startWrong" ${s.wrong?'':'disabled'}>間違えた問題 ${s.wrong}問</button>
+      <button class="btn sec" id="startStar" ${starN?'':'disabled'}>★を付けた問題 ${starN}問</button>
+    </div>
+  </section>`;
+  $app.innerHTML=html;
+  bindHome();
+  window.scrollTo(0,0);
+}
+function bindHome(){
+  $app.querySelectorAll('[data-subj]').forEach(b=>b.onclick=()=>{UI.subj=b.dataset.subj;persistUI();renderHome()});
+  $app.querySelectorAll('[data-year]').forEach(b=>b.onclick=()=>{
+    const y=b.dataset.year;const ids=D.qs.filter(q=>q.s===UI.subj&&q.y===y).map(q=>q.id);
+    startSession(ids,`${yl(y)} ${SUBJ_LABEL[UI.subj]}`,'year');
+  });
+  $app.querySelectorAll('[data-rmode]').forEach(b=>b.onclick=()=>{UI.rmode=b.dataset.rmode;persistUI();renderHome()});
+  $app.querySelectorAll('[data-grp]').forEach(b=>b.onclick=()=>{const g=+b.dataset.grp;UI.rgroups=UI.rgroups.includes(g)?UI.rgroups.filter(x=>x!==g):UI.rgroups.concat(g);persistUI();b.setAttribute('aria-pressed',UI.rgroups.includes(g))});
+  $app.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{UI.rcount=+b.dataset.rc;persistUI();$app.querySelectorAll('[data-rc]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+  $app.querySelectorAll('[data-rp]').forEach(b=>b.onclick=()=>{UI.rpool=b.dataset.rp;persistUI();$app.querySelectorAll('[data-rp]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+  $app.querySelector('#startRandom').onclick=()=>{
+    let pool=UI.rmode==='all'?D.qs.slice():qs(UI.subj);
+    if(UI.rmode!=='all'&&UI.subj==='基礎'&&UI.rgroups.length)pool=pool.filter(q=>UI.rgroups.includes(q.g));
+    if(UI.rpool==='new')pool=pool.filter(q=>!rec(q));
+    if(UI.rpool==='weak')pool=pool.filter(q=>!rec(q)||!rec(q).last);
+    if(!pool.length){toast('条件に合う問題がありません');return}
+    let ids=shuffle(pool).map(q=>q.id);if(UI.rcount)ids=ids.slice(0,UI.rcount);
+    const scope=UI.rmode==='all'?'3科目':SUBJ_LABEL[UI.subj];
+    startSession(ids,`ランダム ${scope} ${ids.length}問`,'random');
+  };
+  const w=$app.querySelector('#startWrong');w&&(w.onclick=()=>{const ids=shuffle(qs(UI.subj).filter(q=>rec(q)&&!rec(q).last)).map(q=>q.id);startSession(ids,`間違えた問題 ${SUBJ_LABEL[UI.subj]}`,'wrong')});
+  const st=$app.querySelector('#startStar');st&&(st.onclick=()=>{const ids=qs(UI.subj).filter(q=>ST.star[q.id]).map(q=>q.id);startSession(ids,`★の問題 ${SUBJ_LABEL[UI.subj]}`,'star')});
+  $app.querySelector('#toStats').onclick=renderStats;
+  const r=$app.querySelector('#resume');r&&(r.onclick=renderQuiz);
+  const dc=$app.querySelector('#discard');dc&&(dc.onclick=()=>{ST.cur=null;save();renderHome()});
+}
+
+/* ---------- SESSION ---------- */
+function startSession(ids,title,kind){
+  if(!ids.length){toast('問題がありません');return}
+  ST.cur={sid:Date.now(),title,kind,ids,pos:0,res:{},start:Date.now(),done:false};
+  save();renderQuiz();
+}
+function curQ(){return BY[ST.cur.ids[ST.cur.pos]]}
+
+function choiceHTML(q,res){
+  const answered=!!res;
+  const cls=(i)=>{if(!answered)return '';const n=i+1;if(isCorrect(q,n)&&q.a!=='all')return 'right';if(res.ch===n)return res.ok?'right':'wrong';return 'dim'};
+  if(q.t){
+    return `<div class="ctbl ${answered?'locked':''}"><table><thead><tr><th></th>${q.t.h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${q.t.r.map((r,i)=>`<tr class="${cls(i)}" data-ch="${i+1}" ${answered?'':'tabindex="0" role="button"'} aria-label="選択肢${i+1}"><td><span class="bub">${i+1}</span></td>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }
+  return `<div class="choices">${(q.c||[]).map((c,i)=>`<button class="ch ${cls(i)}" data-ch="${i+1}" ${answered?'disabled':''}><span class="bub">${i+1}</span><span class="tx">${c}</span></button>`).join('')}</div>`;
+}
+function feedbackHTML(q,res){
+  if(!res)return '';
+  const v=res.skip?`<div class="verdict ng">とばしました <span class="small">正答 ${ansText(q)}</span></div>`:
+    res.ok?`<div class="verdict ok">正解 <span class="small muted">正答 ${ansText(q)}</span></div>`:
+    `<div class="verdict ng">不正解 <span class="small">あなた ${NUMC[res.ch-1]} → 正答 ${ansText(q)}</span></div>`;
+  return `<div class="fb">${v}
+    ${q.note?`<div class="note">${h(q.note)}</div>`:''}
+    ${!q.off?`<div class="note">この問題の正答は公式発表で確認できていません（AIが解いた答えです）。</div>`:''}
+    <div class="ex"><div class="ex-h"><span>解説</span><span class="badge">AI作成</span>${q.chk?'<span class="badge warn">要確認</span>':''}</div>${q.ex||'<p class="muted">解説は準備中です。</p>'}</div></div>`;
+}
+function qBodyHTML(q){
+  return `<div class="qtag"><span class="num">${h(q.n)}</span><span>${h(yl(q.y))}</span><span>${h(SUBJ_LABEL[q.s])}${q.g?` ${q.g}群`:''}</span></div>
+  <div class="qtext">${q.q}</div>
+  ${q.img.map(src=>`<div class="fig"><img src="img/${h(src)}" alt="${h(q.n)}の図" loading="lazy"></div>`).join('')}`;
+}
+function renderQuiz(){
+  const S=ST.cur;if(!S){renderHome();return}
+  const q=curQ();const res=S.res[q.id];const n=S.ids.length;
+  const answeredCount=Object.keys(S.res).length;
+  const last=S.pos===n-1;
+  $app.innerHTML=`
+  <div class="qbar"><button class="iconbtn" id="qExit" aria-label="終了">✕</button>
+    <div class="prog" aria-hidden="true"><i style="width:${answeredCount*100/n}%"></i></div>
+    <span class="mono small">${S.pos+1}/${n}</span>
+    <button class="iconbtn ${ST.star[q.id]?'on':''}" id="qStar" aria-label="あとで見直す印">★</button></div>
+  ${qBodyHTML(q)}
+  ${choiceHTML(q,res)}
+  ${feedbackHTML(q,res)}
+  <div class="qnav">
+    <button class="btn sec" id="qPrev" ${S.pos===0?'disabled':''}>前へ</button>
+    ${res?`<button class="btn" id="qNext">${last?'結果を見る':'次の問題'}</button>`:`<button class="btn sec" id="qSkip">わからない（答えを見る）</button>`}
+  </div>`;
+  const pick=(n)=>{if(S.res[q.id])return;answer(q,n)};
+  $app.querySelectorAll('[data-ch]').forEach(el=>{
+    el.onclick=()=>pick(+el.dataset.ch);
+    el.onkeydown=(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(+el.dataset.ch)}};
+  });
+  $app.querySelector('#qExit').onclick=()=>{if(Object.keys(S.res).length){S.done=true;S.end=Date.now();archive(S);save();renderResult(S)}else{ST.cur=null;save();renderHome()}};
+  $app.querySelector('#qStar').onclick=(e)=>{if(ST.star[q.id])delete ST.star[q.id];else ST.star[q.id]=1;save();e.currentTarget.classList.toggle('on')};
+  $app.querySelector('#qPrev').onclick=()=>{S.pos--;save();renderQuiz();window.scrollTo(0,0)};
+  const nx=$app.querySelector('#qNext');nx&&(nx.onclick=()=>{if(last){S.done=true;S.end=Date.now();archive(S);save();renderResult(S)}else{S.pos++;save();renderQuiz();window.scrollTo(0,0)}});
+  const sk=$app.querySelector('#qSkip');sk&&(sk.onclick=()=>answer(q,0));
+}
+function answer(q,ch){
+  const S=ST.cur;const ok=ch>0&&isCorrect(q,ch);
+  S.res[q.id]={ch,ok,skip:ch===0,t:Date.now()};
+  const r=ST.ans[q.id]||{n:0,c:0};r.n++;if(ok)r.c++;r.last=ok;r.lastCh=ch;r.t=Date.now();ST.ans[q.id]=r;
+  ST.log.push({id:q.id,ch,ok,t:Date.now()});if(ST.log.length>6000)ST.log=ST.log.slice(-6000);
+  save();
+  const y=window.scrollY;renderQuiz();window.scrollTo(0,y);
+  const fb=$app.querySelector('.fb');if(fb){const r2=fb.getBoundingClientRect();if(r2.top>window.innerHeight*0.7)window.scrollBy({top:r2.top-window.innerHeight*0.35,behavior:'smooth'})}
+}
+function archive(S){
+  const ids=S.ids.filter(id=>S.res[id]);
+  const sum={sid:S.sid,title:S.title,start:S.start,end:S.end,n:ids.length,ok:ids.filter(id=>S.res[id].ok).length,items:ids.map(id=>[id,S.res[id].ch,S.res[id].ok?1:0])};
+  ST.sessions.unshift(sum);ST.sessions=ST.sessions.slice(0,60);
+}
+
+/* ---------- RESULT ---------- */
+function renderResult(S){
+  const ids=S.ids.filter(id=>S.res[id]);const ok=ids.filter(id=>S.res[id].ok).length;
+  const wrongIds=ids.filter(id=>!S.res[id].ok);
+  $app.innerHTML=`
+  <header class="top"><div class="brand"><div class="sub">結果</div><h1>${h(S.title)}</h1></div></header>
+  <div class="score"><span class="big">${ok}<span class="muted" style="font-size:24px"> / ${ids.length}</span></span><span style="font-size:22px;font-weight:700">${pct(ok,ids.length)}</span>
+    ${ids.length<S.ids.length?`<span class="small muted">（${S.ids.length}問中 ${ids.length}問を解答）</span>`:''}</div>
+  <div class="small muted">合格ラインは各科目50%以上（専門は25問選択、基礎は各群3問選択）。</div>
+  <button class="btn wide" id="cpSession">Claudeに貼り付ける用にコピー</button>
+  <div class="actions">
+    <button class="btn sec" id="againWrong" ${wrongIds.length?'':'disabled'}>間違えた${wrongIds.length}問をもう一度</button>
+    <button class="btn sec" id="goHome">ホームへ</button>
+  </div>
+  <div class="rlist">${ids.map(id=>{const q=BY[id];const r=S.res[id];
+    return `<div class="ri"><button data-open="${id}" aria-expanded="false"><span class="mk ${r.skip?'sk':r.ok?'ok':'ng'}">${r.skip?'–':r.ok?'○':'×'}</span><span class="t"><span class="mono">${h(q.y)} ${h(q.n)}</span>　${h(q.plain)}</span><span class="a">${r.skip?'—':NUMC[r.ch-1]}→${ansText(q)}</span></button><div class="det" hidden></div></div>`}).join('')}</div>`;
+  ST.cur=null;save();
+  $app.querySelector('#cpSession').onclick=()=>copyText(sessionText(S));
+  $app.querySelector('#goHome').onclick=renderHome;
+  const aw=$app.querySelector('#againWrong');aw&&(aw.onclick=()=>startSession(shuffle(wrongIds),`もう一度：${S.title}`,'again'));
+  $app.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{
+    const det=b.nextElementSibling;const q=BY[b.dataset.open];
+    if(det.hidden){det.innerHTML=qBodyHTML(q)+choiceHTML(q,S.res[q.id])+feedbackHTML(q,S.res[q.id]);det.hidden=false;b.setAttribute('aria-expanded','true')}
+    else{det.hidden=true;b.setAttribute('aria-expanded','false')}
+  });
+  window.scrollTo(0,0);
+}
+function lineFor(q,ch){return `- ${yl(q.y)} ${q.s} ${q.n}${q.g?`（${q.g}群 ${D.meta.groups[q.g]}）`:''}：自分の解答 ${ch?NUMC[ch-1]:'わからない'} → 正答 ${ansText(q)}\n  問題：${q.plain}…`}
+function sessionText(S){
+  const ids=S.ids.filter(id=>S.res[id]);const ok=ids.filter(id=>S.res[id].ok).length;
+  const wrong=ids.filter(id=>!S.res[id].ok);
+  let t=`【技術士第一次試験 過去問演習の結果】\n日時：${fmtDate(S.start)}\n内容：${S.title}\n成績：${ok} / ${ids.length}問正解（${pct(ok,ids.length)}）\n`;
+  if(wrong.length){t+=`\n■ 間違えた・わからなかった問題（${wrong.length}問）\n`+wrong.map(id=>lineFor(BY[id],S.res[id].ch)).join('\n')+'\n'}
+  t+=`\n■ これまでの累計\n`+SUBJ.map(s=>{const x=subjStats(s);return `${SUBJ_LABEL[s]}：${x.done}/${x.total}問 解答済み、直近の正答率 ${pct(x.correct,x.done)}`}).join('\n');
+  t+=`\n\n上の結果から、私の弱点と、試験までに優先して復習すべき分野を教えてください。`;
+  return t;
+}
+
+/* ---------- STATS ---------- */
+function overallText(){
+  let t=`【技術士第一次試験 過去問演習の記録（${fmtDate(Date.now())}時点）】\n`;
+  for(const s of SUBJ){
+    const x=subjStats(s);if(!x.total)continue;
+    t+=`\n■ ${SUBJ_LABEL[s]}：${x.done}/${x.total}問 解答済み、直近の正答率 ${pct(x.correct,x.done)}\n`;
+    for(const y of D.meta.years){const l=D.qs.filter(q=>q.s===s&&q.y===y);if(!l.length)continue;const d=l.filter(q=>rec(q));if(!d.length)continue;const c=d.filter(q=>rec(q).last).length;t+=`  ${yl(y)}：${c}/${d.length}（${pct(c,d.length)}）\n`}
+    if(s==='基礎'){for(let g=1;g<=5;g++){const d=qs(s).filter(q=>q.g===g&&rec(q));if(!d.length)continue;const c=d.filter(q=>rec(q).last).length;t+=`  ${g}群 ${D.meta.groups[g]}：${c}/${d.length}（${pct(c,d.length)}）\n`}}
+    const wrong=qs(s).filter(q=>rec(q)&&!rec(q).last);
+    if(wrong.length){t+=`  間違えたままの問題（${wrong.length}問）：\n`+wrong.slice(0,80).map(q=>lineFor(q,rec(q).lastCh).replace(/^/gm,'  ')).join('\n')+(wrong.length>80?`\n  …ほか${wrong.length-80}問`:'')+'\n'}
+  }
+  t+=`\n上の記録から、私の弱点と、試験までに優先して復習すべき分野を教えてください。`;
+  return t;
+}
+function renderStats(){
+  const rows=(s)=>D.meta.years.map(y=>{const l=D.qs.filter(q=>q.s===s&&q.y===y);if(!l.length)return '';const d=l.filter(q=>rec(q));const c=d.filter(q=>rec(q).last).length;return `<tr><td>${h(yl(y))}</td><td>${d.length}/${l.length}</td><td>${pct(c,d.length)}</td></tr>`}).join('');
+  const grows=()=>[1,2,3,4,5].map(g=>{const l=qs('基礎').filter(q=>q.g===g);if(!l.length)return '';const d=l.filter(q=>rec(q));const c=d.filter(q=>rec(q).last).length;return `<tr><td>${g}群 ${h(D.meta.groups[g])}</td><td>${d.length}/${l.length}</td><td>${pct(c,d.length)}</td></tr>`}).join('');
+  $app.innerHTML=`
+  <header class="top"><div class="brand"><div class="sub">記録・書き出し</div><h1>これまでの成績</h1></div><button class="linkbtn" id="back">ホームへ</button></header>
+  <button class="btn wide" id="cpAll">全体の成績をClaude用にコピー</button>
+  ${SUBJ.map(s=>{const x=subjStats(s);if(!x.total)return '';return `<section class="blk"><div class="blk-h"><h2>${SUBJ_LABEL[s]}</h2><span class="small muted mono">${x.done}/${x.total}問 ${pct(x.correct,x.done)}</span></div>
+    <div class="card stbl"><table><thead><tr><th>年度</th><th>解答済み</th><th>正答率</th></tr></thead><tbody>${rows(s)}</tbody></table></div>
+    ${s==='基礎'?`<div class="card stbl"><table><thead><tr><th>群</th><th>解答済み</th><th>正答率</th></tr></thead><tbody>${grows()}</tbody></table></div>`:''}</section>`}).join('')}
+  <section class="blk"><div class="blk-h"><h2>最近の演習</h2></div>
+    ${ST.sessions.length?`<div class="rlist">${ST.sessions.slice(0,15).map((x,i)=>`<div class="ri"><button data-sess="${i}"><span class="mk ok mono" style="font-size:13px">${pct(x.ok,x.n)}</span><span class="t">${h(x.title)}</span><span class="a">${fmtDate(x.start).slice(5)}</span></button></div>`).join('')}</div><div class="small muted">タップするとその回の結果をコピーします。</div>`:'<div class="card empty">まだ演習の記録はありません。</div>'}
+  </section>
+  <section class="blk"><div class="blk-h"><h2>記録の引き継ぎ</h2></div>
+    <div class="card"><div class="small muted">記録はこの端末のブラウザに保存されています。別の端末に移すときは、ここでコピーした文字を移したい端末の同じ欄に貼り付けて「読み込む」を押してください。</div>
+      <button class="btn sec" id="cpBackup">記録データをコピー</button>
+      <textarea id="restoreTxt" placeholder="ここに記録データを貼り付け"></textarea>
+      <button class="btn sec" id="restore">読み込む（今の記録と合わせる）</button>
+    </div>
+    <div class="card"><div class="confirm" id="resetBox"><button class="btn sec" id="reset">記録をすべて消す</button></div></div>
+  </section>`;
+  $app.querySelector('#back').onclick=renderHome;
+  $app.querySelector('#cpAll').onclick=()=>copyText(overallText());
+  $app.querySelectorAll('[data-sess]').forEach(b=>b.onclick=()=>{const x=ST.sessions[+b.dataset.sess];const S={start:x.start,title:x.title,ids:x.items.map(i=>i[0]),res:{}};x.items.forEach(([id,ch,ok])=>S.res[id]={ch,ok:!!ok,skip:ch===0});if(S.ids.every(id=>BY[id]))copyText(sessionText(S));else toast('この回の問題データが見つかりません')});
+  $app.querySelector('#cpBackup').onclick=()=>copyText('GISHI1:'+btoa(unescape(encodeURIComponent(JSON.stringify({ans:ST.ans,star:ST.star,sessions:ST.sessions})))));
+  $app.querySelector('#restore').onclick=()=>{
+    try{let s=$app.querySelector('#restoreTxt').value.trim();if(s.startsWith('GISHI1:'))s=s.slice(7);const o=JSON.parse(decodeURIComponent(escape(atob(s))));
+      for(const [id,r] of Object.entries(o.ans||{})){const m=ST.ans[id];if(!m||(r.t||0)>(m.t||0))ST.ans[id]=r}
+      Object.assign(ST.star,o.star||{});
+      const have=new Set(ST.sessions.map(x=>x.sid));(o.sessions||[]).forEach(x=>{if(!have.has(x.sid))ST.sessions.push(x)});ST.sessions.sort((a,b)=>b.start-a.start);ST.sessions=ST.sessions.slice(0,60);
+      save();toast('記録を読み込みました');renderStats();
+    }catch(e){toast('読み込めませんでした。コピーした文字をそのまま貼り付けてください')}
+  };
+  $app.querySelector('#reset').onclick=()=>{const box=$app.querySelector('#resetBox');box.innerHTML='<span class="small">本当に消しますか？元に戻せません。</span><button class="btn" id="resetYes" style="background:var(--ng);color:#fff">消す</button><button class="btn sec" id="resetNo">やめる</button>';
+    box.querySelector('#resetYes').onclick=()=>{ST=blank();save();toast('記録を消しました');renderStats()};box.querySelector('#resetNo').onclick=renderStats};
+  window.scrollTo(0,0);
+}
+
+/* ---------- boot ---------- */
+fetch('data/questions.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{
+  D=d;D.qs.forEach(q=>BY[q.id]=q);
+  if(ST.cur&&!ST.cur.done&&ST.cur.ids.some(id=>!BY[id]))ST.cur=null;
+  renderHome();
+}).catch(e=>{$app.innerHTML='<div class="empty">問題データを読み込めませんでした。ネットにつながっているか確認して、もう一度開いてください。</div>'});
+if('serviceWorker' in navigator && location.protocol==='https:' && !/claude|claudeusercontent/.test(location.host)){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+})();
+</script>
+
+</body></html>
