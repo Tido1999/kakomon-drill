@@ -116,7 +116,41 @@ math{font-size:1.05em}math .ovl{border-top:.075em solid currentColor;padding-top
 .ch.wrong{border-color:var(--ng);background:var(--ng-soft)}
 .ch.wrong .bub{background:var(--ng);border-color:var(--ng);color:#fff}
 .ch[disabled]{cursor:default}
-.ch.dim{opacity:.6}
+.ch.dim{opacity:.55}
+.ch .tx,.qtext,.fb .ex,.ansrow .at{-webkit-user-select:text;user-select:text}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;padding:2px 10px;border-radius:999px;margin-bottom:6px;line-height:1.6}
+.pill.ok{background:var(--ok);color:#fff}
+.pill.ng{background:var(--ng);color:#fff}
+.ctbl td.pc{white-space:nowrap;font-size:12.5px;font-weight:700}
+.ctbl tr.right td.pc{color:var(--ok)} .ctbl tr.wrong td.pc{color:var(--ng)}
+.vstrip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-radius:var(--r);padding:10px 14px;font-weight:700;font-size:18px}
+.vstrip.ok{background:var(--ok-soft);color:var(--ok);border:1.5px solid var(--ok)}
+.vstrip.ng{background:var(--ng-soft);color:var(--ng);border:1.5px solid var(--ng)}
+.vstrip.sk{background:var(--soft);color:var(--ink);border:1.5px solid var(--line)}
+.vstrip .vs-a{font-size:15px;color:var(--ink);font-weight:700}
+.vstrip .vs-a b{font-family:var(--mono)}
+.ansrows{display:flex;flex-direction:column;gap:8px}
+.ansrow{display:grid;grid-template-columns:1fr;gap:2px;align-items:start;border-radius:8px;padding:9px 11px;font-size:15px}
+.ansrow.ok{background:var(--ok-soft);border-left:4px solid var(--ok)}
+.ansrow.ng{background:var(--ng-soft);border-left:4px solid var(--ng)}
+.ansrow .al{font-size:12.5px;font-weight:700;white-space:nowrap;padding-top:2px}
+.ansrow.ok .al{color:var(--ok)} .ansrow.ng .al{color:var(--ng)}
+.ansrow .at{min-width:0;overflow-wrap:anywhere}
+.exsec{display:flex;flex-direction:column;gap:2px}
+.exsec+.exsec{margin-top:10px}
+.exsec.mine{background:var(--ng-soft);border-radius:8px;padding:8px 10px}
+.exsec .ex-t{font-size:13.5px;font-weight:700;color:var(--ink)}
+.memo{border:1.5px solid var(--warn);background:var(--warn-soft);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.memo textarea{font-family:var(--font);font-size:15px;min-height:84px;line-height:1.6}
+.memo .mrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.memo .mrow .btn{padding:8px 12px;font-size:14px}
+.iconbtn.memo-on{color:var(--warn);border-color:var(--warn);background:var(--warn-soft);font-weight:700}
+.mlist{display:flex;flex-direction:column;gap:10px}
+.mitem .mref{font-size:13px;color:var(--muted)}
+.mitem .mref b{font-family:var(--mono);color:var(--ink);font-weight:500}
+.mitem .mtx{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15.5px}
+.mitem .mrow{display:flex;gap:8px;flex-wrap:wrap}
+.mitem .mrow .btn{padding:7px 12px;font-size:14px}
 
 .ctbl{overflow-x:auto}
 .ctbl table{border-collapse:separate;border-spacing:0 6px;width:100%;font-size:15px}
@@ -182,7 +216,7 @@ let D=null, BY={}, ST=null, UI={subj:'専門', rcount:25, rpool:'all', rgroups:[
 const $app=document.getElementById('app');
 
 /* ---------- storage ---------- */
-function blank(){return {ans:{},star:{},log:[],sessions:[],cur:null,ui:null}}
+function blank(){return {ans:{},star:{},memo:{},log:[],sessions:[],cur:null,ui:null}}
 function load(){try{const s=localStorage.getItem(KEY);if(s){const o=JSON.parse(s);return Object.assign(blank(),o)}}catch(e){}return blank()}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(ST))}catch(e){}}
 ST=load();
@@ -264,6 +298,7 @@ function renderHome(){
       <button class="btn sec" id="startWrong" ${s.wrong?'':'disabled'}>間違えた問題 ${s.wrong}問</button>
       <button class="btn sec" id="startStar" ${starN?'':'disabled'}>★を付けた問題 ${starN}問</button>
     </div>
+    <button class="btn sec wide" id="toMemos">メモ一覧 ${memoList().length}件</button>
   </section>`;
   $app.innerHTML=html;
   bindHome();
@@ -292,35 +327,153 @@ function bindHome(){
   const w=$app.querySelector('#startWrong');w&&(w.onclick=()=>{const ids=shuffle(qs(UI.subj).filter(q=>rec(q)&&!rec(q).last)).map(q=>q.id);startSession(ids,`間違えた問題 ${SUBJ_LABEL[UI.subj]}`,'wrong')});
   const st=$app.querySelector('#startStar');st&&(st.onclick=()=>{const ids=qs(UI.subj).filter(q=>ST.star[q.id]).map(q=>q.id);startSession(ids,`★の問題 ${SUBJ_LABEL[UI.subj]}`,'star')});
   $app.querySelector('#toStats').onclick=renderStats;
-  const r=$app.querySelector('#resume');r&&(r.onclick=renderQuiz);
+  $app.querySelector('#toMemos').onclick=renderMemos;
+  const r=$app.querySelector('#resume');r&&(r.onclick=()=>{memoOpen=!!ST.memo[curQ().id];renderQuiz()});
   const dc=$app.querySelector('#discard');dc&&(dc.onclick=()=>{ST.cur=null;save();renderHome()});
+}
+
+/* ---------- MEMO ---------- */
+let memoOpen=false, lastSel='';
+document.addEventListener('selectionchange',()=>{
+  const sel=window.getSelection&&window.getSelection();if(!sel||sel.isCollapsed)return;
+  const node=sel.anchorNode&&(sel.anchorNode.nodeType===1?sel.anchorNode:sel.anchorNode.parentElement);
+  if(!node||!$app.contains(node)||node.closest('textarea,.memo'))return;
+  const t=sel.toString().replace(/\s+/g,' ').trim();if(t&&t.length<=120)lastSel=t;
+});
+function qRef(q){return `${yl(q.y)} ${q.s} ${q.n}`}
+function memoPanelHTML(q){
+  const m=ST.memo[q.id];
+  return `<div class="memo"><div class="small"><b>メモ</b>　<span class="muted">${h(qRef(q))}</span></div>
+    <textarea id="memoTxt" placeholder="わからなかった用語や、あとで調べたいことを書いておけます">${m?h(m.t):''}</textarea>
+    <div class="mrow"><button class="btn sec" id="memoSel">選んだ語句を追加</button><button class="btn sec" id="memoClose">閉じる</button></div>
+    <div class="small muted">問題文・選択肢・解説の語句を長押しで選んでから「選んだ語句を追加」を押すと、1行ずつ追加されます。入力した内容は自動で保存されます。</div></div>`;
+}
+function setMemo(id,t){t=t.replace(/\s+$/,'');if(t)ST.memo[id]={t,at:Date.now()};else delete ST.memo[id];save();
+  const b=$app.querySelector('#qMemo');b&&b.classList.toggle('memo-on',!!ST.memo[id])}
+function bindMemoPanel(q){
+  const ta=$app.querySelector('#memoTxt');if(!ta)return;
+  ta.oninput=()=>setMemo(q.id,ta.value);
+  $app.querySelector('#memoClose').onclick=()=>{memoOpen=false;const y=window.scrollY;renderQuiz();window.scrollTo(0,y)};
+  const sb=$app.querySelector('#memoSel');
+  sb.onpointerdown=()=>{const sel=window.getSelection&&window.getSelection();const t=sel&&!sel.isCollapsed?sel.toString().replace(/\s+/g,' ').trim():'';if(t&&t.length<=120)lastSel=t};
+  sb.onclick=()=>{
+    if(!lastSel){toast('先に問題文などの語句を長押しで選んでください');return}
+    const cur=ta.value.replace(/\s+$/,'');ta.value=(cur?cur+'\n':'')+'・'+lastSel;setMemo(q.id,ta.value);toast(`「${lastSel.slice(0,20)}」を追加しました`);lastSel='';
+    const sel=window.getSelection&&window.getSelection();sel&&sel.removeAllRanges&&sel.removeAllRanges();
+  };
+}
+function memoList(){return Object.entries(ST.memo).filter(([id])=>BY[id]).sort((a,b)=>b[1].at-a[1].at)}
+function memoText(){
+  const L=memoList();
+  let t=`【技術士第一次試験（生物工学部門）の勉強メモ】\n過去問を解いていて、わからなかった用語・調べたいことのメモです。それぞれ、試験対策として押さえるべきポイントがわかるように簡潔に説明してください。\n`;
+  for(const [id,m] of L){const q=BY[id];t+=`\n■ ${qRef(q)}（問題：${q.plain}…）\n${m.t}\n`}
+  return t;
+}
+function renderMemos(){
+  const L=memoList();
+  $app.innerHTML=`
+  <header class="top"><div class="brand"><div class="sub">復習</div><h1>メモ一覧</h1></div><button class="linkbtn" id="back">ホームへ</button></header>
+  ${L.length?`<button class="btn wide" id="cpMemo">メモをまとめてClaude用にコピー</button>
+  <div class="small muted">コピーした文をClaudeに貼り付けると、メモした用語の説明をまとめて頼めます。</div>
+  <div class="mlist">${L.map(([id,m])=>{const q=BY[id];return `<div class="card mitem" data-mid="${id}"><div class="mref"><b>${h(qRef(q))}</b>　${h(fmtDate(m.at))}</div><div class="small muted">${h(q.plain)}…</div><div class="mtx">${h(m.t)}</div>
+    <div class="mrow"><button class="btn sec" data-mopen="${id}">問題を開く</button><button class="btn sec" data-mdel="${id}">削除</button></div></div>`}).join('')}</div>`
+  :'<div class="card empty">まだメモはありません。問題を解いている画面の上にある「メモ」から書けます。</div>'}`;
+  $app.querySelector('#back').onclick=renderHome;
+  const cp=$app.querySelector('#cpMemo');cp&&(cp.onclick=()=>copyText(memoText()));
+  $app.querySelectorAll('[data-mopen]').forEach(b=>b.onclick=()=>{const id=b.dataset.mopen;memoOpen=true;startSession([id],`メモ：${qRef(BY[id])}`,'memo')});
+  $app.querySelectorAll('[data-mdel]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.mdel;const row=b.parentElement;
+    row.innerHTML='<span class="small">このメモを消しますか？</span><button class="btn" style="background:var(--ng);color:#fff" data-y>消す</button><button class="btn sec" data-n>やめる</button>';
+    row.querySelector('[data-y]').onclick=()=>{delete ST.memo[id];save();toast('メモを消しました');renderMemos()};
+    row.querySelector('[data-n]').onclick=renderMemos;
+  });
+  window.scrollTo(0,0);
 }
 
 /* ---------- SESSION ---------- */
 function startSession(ids,title,kind){
   if(!ids.length){toast('問題がありません');return}
   ST.cur={sid:Date.now(),title,kind,ids,pos:0,res:{},start:Date.now(),done:false};
+  if(kind!=='memo')memoOpen=!!ST.memo[ids[0]];
   save();renderQuiz();
 }
 function curQ(){return BY[ST.cur.ids[ST.cur.pos]]}
 
+/* question polarity: -1 = pick the wrong statement, 1 = pick the right statement, 0 = other (combinations, counts...) */
+function polarity(q){
+  if(!q.c||!q.c.length)return 0;
+  const avg=q.c.reduce((a,c)=>a+String(c).replace(/<[^>]+>/g,'').length,0)/q.c.length;
+  if(avg<14)return 0;
+  const t=String(q.q).replace(/<[^>]+>/g,'').slice(-90);
+  if(/組合せ|の数|いくつ/.test(t))return 0;
+  if(/(不適切な|誤っている|誤りの|誤った|適切でない|正しくない)もの(は|を|として)/.test(t))return -1;
+  if(/(適切な|正しい)もの(は|を|として)/.test(t))return 1;
+  return 0;
+}
+function chLabel(q,n,res){
+  const pol=polarity(q);const right=isCorrect(q,n)&&q.a!=='all';const mine=res&&res.ch===n;
+  if(right){const k=pol<0?'・誤った記述':pol>0?'・正しい記述':'';return {cls:'ok',t:`✓ 正解${mine?'（あなたの解答）':''}${k}`,short:mine?'✓ 正解・あなた':'✓ 正解'}}
+  if(mine){const k=pol<0?'・正しい記述':pol>0?'・誤った記述':'';return {cls:'ng',t:`✗ あなたの解答${k}`,short:'✗ あなた'}}
+  return null;
+}
 function choiceHTML(q,res){
   const answered=!!res;
   const cls=(i)=>{if(!answered)return '';const n=i+1;if(isCorrect(q,n)&&q.a!=='all')return 'right';if(res.ch===n)return res.ok?'right':'wrong';return 'dim'};
   if(q.t){
-    return `<div class="ctbl ${answered?'locked':''}"><table><thead><tr><th></th>${q.t.h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${q.t.r.map((r,i)=>`<tr class="${cls(i)}" data-ch="${i+1}" ${answered?'':'tabindex="0" role="button"'} aria-label="選択肢${i+1}"><td><span class="bub">${i+1}</span></td>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    return `<div class="ctbl ${answered?'locked':''}"><table><thead><tr><th></th>${q.t.h.map(x=>`<th>${x}</th>`).join('')}${answered?'<th></th>':''}</tr></thead><tbody>${q.t.r.map((r,i)=>{const L=answered?chLabel(q,i+1,res):null;return `<tr class="${cls(i)}" data-ch="${i+1}" ${answered?'':'tabindex="0" role="button"'} aria-label="選択肢${i+1}"><td><span class="bub">${i+1}</span></td>${r.map(c=>`<td>${c}</td>`).join('')}${answered?`<td class="pc">${L?L.short:''}</td>`:''}</tr>`}).join('')}</tbody></table></div>`;
   }
-  return `<div class="choices">${(q.c||[]).map((c,i)=>`<button class="ch ${cls(i)}" data-ch="${i+1}" ${answered?'disabled':''}><span class="bub">${i+1}</span><span class="tx">${c}</span></button>`).join('')}</div>`;
+  return `<div class="choices">${(q.c||[]).map((c,i)=>{const L=answered?chLabel(q,i+1,res):null;return `<button class="ch ${cls(i)}" data-ch="${i+1}" ${answered?'disabled':''}><span class="bub">${i+1}</span><span class="tx">${L?`<span class="pill ${L.cls}">${L.t}</span><br>`:''}${c}</span></button>`}).join('')}</div>`;
+}
+function choiceText(q,n){
+  if(q.c)return q.c[n-1]||'';
+  if(q.t){const r=q.t.r[n-1];return r?r.map((c,i)=>`${q.t.h[i]}：${c}`).join('　'):''}
+  return '';
+}
+function verdictStrip(q,res){
+  if(!res)return '';
+  if(q.a==='all')return `<div class="vstrip ok">✓ この問題は全員正解扱い</div>`;
+  const A=`<span class="vs-a">正解は <b>${ansText(q)}</b></span>`;
+  if(res.skip)return `<div class="vstrip sk">– わからない　${A}</div>`;
+  if(res.ok)return `<div class="vstrip ok">✓ 正解！　${A}</div>`;
+  return `<div class="vstrip ng">✗ 不正解　<span class="vs-a">あなた <b>${NUMC[res.ch-1]}</b> → 正解 <b>${ansText(q)}</b></span></div>`;
+}
+function splitEx(ex){
+  if(!ex||/<div class="tbl"/.test(ex))return null;
+  const body=ex.replace(/^\s*<p>/,'').replace(/<\/p>\s*$/,'');
+  return body.split(/<br>|<\/p>\s*<p>/).map(x=>x.trim()).filter(Boolean);
 }
 function feedbackHTML(q,res){
   if(!res)return '';
-  const v=res.skip?`<div class="verdict ng">とばしました <span class="small">正答 ${ansText(q)}</span></div>`:
-    res.ok?`<div class="verdict ok">正解 <span class="small muted">正答 ${ansText(q)}</span></div>`:
-    `<div class="verdict ng">不正解 <span class="small">あなた ${NUMC[res.ch-1]} → 正答 ${ansText(q)}</span></div>`;
-  return `<div class="fb">${v}
-    ${q.note?`<div class="note">${h(q.note)}</div>`:''}
-    ${!q.off?`<div class="note">この問題の正答は公式発表で確認できていません（AIが解いた答えです）。</div>`:''}
-    <div class="ex"><div class="ex-h"><span>解説</span><span class="badge">AI作成</span>${q.chk?'<span class="badge warn">要確認</span>':''}</div>${q.ex||'<p class="muted">解説は準備中です。</p>'}</div></div>`;
+  const notes=`${q.note?`<div class="note">${h(q.note)}</div>`:''}${!q.off?`<div class="note">この問題の正答は公式発表で確認できていません（AIが解いた答えです）。</div>`:''}`;
+  const badges=`<span class="badge">AI作成</span>${q.chk?'<span class="badge warn">要確認</span>':''}`;
+  let rows='';
+  if(q.a!=='all'&&Array.isArray(q.a)&&!res.ok){
+    if(!res.ok&&!res.skip)rows+=`<div class="ansrow ng"><span class="al">✗ あなたの解答 ${NUMC[res.ch-1]}</span><span class="at">${choiceText(q,res.ch)}</span></div>`;
+    rows+=q.a.map(n=>`<div class="ansrow ok"><span class="al">✓ 正解 ${NUMC[n-1]}</span><span class="at">${choiceText(q,n)}</span></div>`).join('');
+  }
+  let exHTML;
+  const segs=splitEx(q.ex);
+  if(!q.ex){exHTML='<p class="muted">解説は準備中です。</p>'}
+  else if(!segs||q.a==='all'||!Array.isArray(q.a)){exHTML=`<div class="exsec"><div class="ex-h"><span class="ex-t">解説</span>${badges}</div>${q.ex}</div>`}
+  else{
+    let first=segs[0];let extra='';
+    const m=first.match(/^(?:公式の)?正答は[①-⑤](?:[・／/][①-⑤])*((?:（[^）]*）)?)。?/);
+    if(m){extra=m[1]||'';first=first.slice(m[0].length).trim()}
+    const rest=segs.slice(1);
+    let mine='';
+    if(!res.ok&&!res.skip){
+      const mk=NUMC[res.ch-1];const idx=rest.findIndex(x=>x.includes(mk));
+      if(idx>=0){mine=rest[idx];rest.splice(idx,1)}
+      else if(!first.includes(mk)){const pol=polarity(q);
+        if(pol<0)mine=`${mk}は正しい（適切な）記述です。この問題は「誤っている（不適切な）記述」を選ぶ問題でした。`;
+        else if(pol>0)mine=`${mk}は誤った（不適切な）記述です。`;}
+    }
+    const nm=q.a.map(n=>NUMC[n-1]).join('・');
+    exHTML=`<div class="exsec"><div class="ex-h"><span class="ex-t">なぜ ${nm} が正解か</span>${badges}</div>${extra?`<p class="small muted">${extra}</p>`:''}<p>${first||'（下の説明を参照）'}</p></div>`
+      +(mine?`<div class="exsec mine"><div class="ex-h"><span class="ex-t">あなたが選んだ ${NUMC[res.ch-1]} について</span></div><p>${mine}</p></div>`:'')
+      +(rest.length?`<div class="exsec"><div class="ex-h"><span class="ex-t">ほかの選択肢・補足</span></div>${rest.map(x=>`<p>${x}</p>`).join('')}</div>`:'');
+  }
+  return `<div class="fb">${rows?`<div class="ansrows">${rows}</div>`:''}${notes}<div class="ex">${exHTML}</div></div>`;
 }
 function qBodyHTML(q){
   return `<div class="qtag"><span class="num">${h(q.n)}</span><span>${h(yl(q.y))}</span><span>${h(SUBJ_LABEL[q.s])}${q.g?` ${q.g}群`:''}</span></div>
@@ -336,8 +489,11 @@ function renderQuiz(){
   <div class="qbar"><button class="iconbtn" id="qExit" aria-label="終了">✕</button>
     <div class="prog" aria-hidden="true"><i style="width:${answeredCount*100/n}%"></i></div>
     <span class="mono small">${S.pos+1}/${n}</span>
+    <button class="iconbtn ${ST.memo[q.id]?'memo-on':''}" id="qMemo" aria-label="メモ" aria-expanded="${memoOpen}">メモ</button>
     <button class="iconbtn ${ST.star[q.id]?'on':''}" id="qStar" aria-label="あとで見直す印">★</button></div>
+  ${memoOpen?memoPanelHTML(q):''}
   ${qBodyHTML(q)}
+  ${verdictStrip(q,res)}
   ${choiceHTML(q,res)}
   ${feedbackHTML(q,res)}
   <div class="qnav">
@@ -351,9 +507,11 @@ function renderQuiz(){
   });
   $app.querySelector('#qExit').onclick=()=>{if(Object.keys(S.res).length){S.done=true;S.end=Date.now();archive(S);save();renderResult(S)}else{ST.cur=null;save();renderHome()}};
   $app.querySelector('#qStar').onclick=(e)=>{if(ST.star[q.id])delete ST.star[q.id];else ST.star[q.id]=1;save();e.currentTarget.classList.toggle('on')};
-  $app.querySelector('#qPrev').onclick=()=>{S.pos--;save();renderQuiz();window.scrollTo(0,0)};
-  const nx=$app.querySelector('#qNext');nx&&(nx.onclick=()=>{if(last){S.done=true;S.end=Date.now();archive(S);save();renderResult(S)}else{S.pos++;save();renderQuiz();window.scrollTo(0,0)}});
+  $app.querySelector('#qPrev').onclick=()=>{S.pos--;memoOpen=!!ST.memo[curQ().id];save();renderQuiz();window.scrollTo(0,0)};
+  const nx=$app.querySelector('#qNext');nx&&(nx.onclick=()=>{if(last){S.done=true;S.end=Date.now();archive(S);save();renderResult(S)}else{S.pos++;memoOpen=!!ST.memo[curQ().id];save();renderQuiz();window.scrollTo(0,0)}});
   const sk=$app.querySelector('#qSkip');sk&&(sk.onclick=()=>answer(q,0));
+  $app.querySelector('#qMemo').onclick=()=>{memoOpen=!memoOpen;const y=window.scrollY;renderQuiz();window.scrollTo(0,memoOpen?0:y);if(memoOpen){const ta=$app.querySelector('#memoTxt');ta&&!ta.value&&ta.focus()}};
+  bindMemoPanel(q);
 }
 function answer(q,ch){
   const S=ST.cur;const ok=ch>0&&isCorrect(q,ch);
@@ -362,7 +520,7 @@ function answer(q,ch){
   ST.log.push({id:q.id,ch,ok,t:Date.now()});if(ST.log.length>6000)ST.log=ST.log.slice(-6000);
   save();
   const y=window.scrollY;renderQuiz();window.scrollTo(0,y);
-  const fb=$app.querySelector('.fb');if(fb){const r2=fb.getBoundingClientRect();if(r2.top>window.innerHeight*0.7)window.scrollBy({top:r2.top-window.innerHeight*0.35,behavior:'smooth'})}
+  const vs=$app.querySelector('.vstrip');if(vs){const r2=vs.getBoundingClientRect();if(r2.top<60)window.scrollBy({top:r2.top-70,behavior:'smooth'})}
 }
 function archive(S){
   const ids=S.ids.filter(id=>S.res[id]);
@@ -445,11 +603,12 @@ function renderStats(){
   $app.querySelector('#back').onclick=renderHome;
   $app.querySelector('#cpAll').onclick=()=>copyText(overallText());
   $app.querySelectorAll('[data-sess]').forEach(b=>b.onclick=()=>{const x=ST.sessions[+b.dataset.sess];const S={start:x.start,title:x.title,ids:x.items.map(i=>i[0]),res:{}};x.items.forEach(([id,ch,ok])=>S.res[id]={ch,ok:!!ok,skip:ch===0});if(S.ids.every(id=>BY[id]))copyText(sessionText(S));else toast('この回の問題データが見つかりません')});
-  $app.querySelector('#cpBackup').onclick=()=>copyText('GISHI1:'+btoa(unescape(encodeURIComponent(JSON.stringify({ans:ST.ans,star:ST.star,sessions:ST.sessions})))));
+  $app.querySelector('#cpBackup').onclick=()=>copyText('GISHI1:'+btoa(unescape(encodeURIComponent(JSON.stringify({ans:ST.ans,star:ST.star,memo:ST.memo,sessions:ST.sessions})))));
   $app.querySelector('#restore').onclick=()=>{
     try{let s=$app.querySelector('#restoreTxt').value.trim();if(s.startsWith('GISHI1:'))s=s.slice(7);const o=JSON.parse(decodeURIComponent(escape(atob(s))));
       for(const [id,r] of Object.entries(o.ans||{})){const m=ST.ans[id];if(!m||(r.t||0)>(m.t||0))ST.ans[id]=r}
       Object.assign(ST.star,o.star||{});
+      for(const [id,m] of Object.entries(o.memo||{})){const c=ST.memo[id];if(!c||(m.at||0)>(c.at||0))ST.memo[id]=m}
       const have=new Set(ST.sessions.map(x=>x.sid));(o.sessions||[]).forEach(x=>{if(!have.has(x.sid))ST.sessions.push(x)});ST.sessions.sort((a,b)=>b.start-a.start);ST.sessions=ST.sessions.slice(0,60);
       save();toast('記録を読み込みました');renderStats();
     }catch(e){toast('読み込めませんでした。コピーした文字をそのまま貼り付けてください')}
